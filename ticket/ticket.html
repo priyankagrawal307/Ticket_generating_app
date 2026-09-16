@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ticket Booking</title>
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(10px, 3vh, 30px) 20px;
+    background: #d9e8dc;
+    font-family: sans-serif;
+  }
+
+  #page-wrapper {
+    width: min(370px, 96vw);
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 22px;
+  }
+
+  /* ---------- TICKET ---------- */
+
+  .ticket {
+    position: relative;
+    background: #ffffff;
+    border-radius: 16px;
+    overflow: hidden;
+    font-family: sans-serif;
+  }
+
+  .ticket-header {
+    background: #e0342d;
+    color: #fff;
+    padding: clamp(10px, 2.5vh, 16px) 20px;
+    font-size: clamp(14px, 4.5vw, 17px);
+    font-weight: 450;
+  }
+
+  .top-row {
+    display: flex;
+    justify-content: space-between;
+    padding: clamp(10px, 2.5vh, 18px) 20px 0 20px;
+  }
+
+  .top-row .block .label {
+    font-size: 11px;
+    color: #888;
+  }
+
+  .top-row .block .value {
+    font-size: clamp(15px, 5.5vw, 16px);
+    font-weight: bold;
+    color: #222;
+    margin-top: 2px;
+  }
+
+  .top-row .block.fare .value {
+    text-align: right;
+  }
+
+  .route-row {
+    display: flex;
+    align-items: center;
+    padding: clamp(10px, 2.5vh, 18px) 20px clamp(10px, 3vh, 22px) 20px;
+    gap: 14px;
+  }
+
+  .route-row .stop {
+    font-size: clamp(15px, 4.5vw, 19px);
+    font-weight: 500;
+    color: #222;
+    line-height: 1.25;
+  }
+
+  .route-row .stop.from { flex: 1; }
+  .route-row .stop.to { flex: 1; text-align: left; }
+
+  /* longer, drawn arrow (line + arrowhead) instead of a text character */
+  .route-row .arrow {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 2px;
+    background: #222;
+    position: relative;
+  }
+
+  .route-row .arrow::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    border-top: 2px solid #222;
+    border-right: 2px solid #222;
+    transform: translateY(-50%) rotate(45deg);
+  }
+
+  /* dashed divider with notch cutouts, like a torn ticket edge */
+  .divider {
+    position: relative;
+    border-top: 2px dashed #ccc;
+    margin: 0 0 clamp(10px, 2.5vh, 20px) 0;
+  }
+
+  .divider::before,
+  .divider::after {
+    content: "";
+    position: absolute;
+    top: -13px;
+    width: 26px;
+    height: 26px;
+    background: #d9e8dc;
+    border-radius: 50%;
+  }
+
+  .divider::before { left: -20px; }
+  .divider::after { right: -20px; }
+
+  .time-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+  }
+
+  .time-row .block .label {
+    font-size: 9px;
+    color: #888;
+  }
+
+  .time-row .block .value {
+    font-size: clamp(8px, 3.2vw, 10px);
+    font-weight: 700;
+    letter-spacing:-0.5px;
+    color: #222;
+    margin-top: 2px;
+  }
+
+  .ticket-id {
+    text-align: center;
+    font-size: clamp(8px, 3vw, 11px);
+    letter-spacing: 1px;
+    color: #555;
+    margin: clamp(10px, 2.5vh, 18px) 0;
+  }
+
+  .divider2 {
+    position: relative;
+    border-top: 2px dashed #ccc;
+    margin: 0 0 clamp(10px, 3vh, 22px) 0;
+  }
+
+  .divider2::before,
+  .divider2::after {
+    content: "";
+    position: absolute;
+    top: -13px;
+    width: 26px;
+    height: 26px;
+    background: #d9e8dc;
+    border-radius: 50%;
+  }
+
+  .divider2::before { left: -20px; }
+  .divider2::after { right: -20px; }
+
+  /* ---------- LOGO (replaces the old generic seal) ---------- */
+  .seal-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: clamp(10px, 2.5vh, 18px);
+  }
+
+  .seal {
+    width: clamp(90px, 22vw, 130px);
+    height: clamp(90px, 22vw, 130px);
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: zoomPulse 2s ease-in-out infinite;
+  }
+
+  .seal img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  @keyframes zoomPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+  }
+
+  .expires {
+    text-align: center;
+    font-size: clamp(12px, 3.5vw, 14px);
+    color: #333;
+    padding-bottom: clamp(10px, 2.5vh, 28px);
+  }
+
+  .qr-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 14px 10px 10px 10px;
+    padding: 12px;
+    border: 1.5px solid #2e7d32;
+    border-radius: 10px;
+    color: #2e7d32;
+    font-weight: 600;
+    background: #fff;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .qr-panel {
+    display: flex;
+    justify-content: center;
+    padding: 6px 20px 0 20px;
+  }
+
+  #qrcode-box {
+    background: #fff;
+    padding: 8px;
+  }
+
+  #new-booking-btn {
+    display: block;
+    width: 100%;
+    margin-top: 16px;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: #1e3c72;
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+  }
+
+  #new-booking-btn:active { opacity: 0.85; }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div id="page-wrapper">
+
+  <!-- FORM SECTION (intentionally unstyled / plain inputs) -->
+  <div id="form-section">
+    <form id="booking-form">
+      <label for="agencyName">Agency / Service Name</label><br>
+      <input type="text" id="agencyName" value="City Transit Services"><br><br>
+
+
+      <label for="busNumber">Route / Bus Number</label><br>
+      <input type="text" id="busNumber" required><br><br>
+
+      <label for="startPoint">Starting Point</label><br>
+      <input type="text" id="startPoint" required><br><br>
+
+      <label for="endPoint">Ending Point</label><br>
+      <input type="text" id="endPoint" required><br><br>
+
+      <label for="passengers">Number of Tickets</label><br>
+      <input type="number" id="passengers" min="1" value="1" required><br><br>
+
+      <label for="pricePerPerson">Price per Ticket (₹)</label><br>
+      <input type="number" id="pricePerPerson" min="1" value="20" required><br><br>
+
+      <label for="validityMinutes">Validity (minutes)</label><br>
+      <input type="number" id="validityMinutes" min="1" value="120" required><br><br>
+
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+
+  <!-- TICKET SECTION (styled) -->
+  <div id="ticket-section" class="hidden">
+
+    <div class="ticket-card">
+      <div class="ticket">
+
+        <div class="ticket-header" id="ticketAgency">पुणे महानगर परिवहन महामंडळ लि.</div>
+
+        <div class="top-row">
+          <div class="block">
+            <div class="label">Route</div>
+            <div class="value" id="ticketRoute"></div>
+          </div>
+          <div class="block">
+            <div class="label">Tickets count</div>
+            <div class="value" id="ticketCount" style="text-align:center"></div>
+          </div>
+          <div class="block fare">
+            <div class="label">Fare</div>
+            <div class="value" id="ticketTotal"></div>
+          </div>
+        </div>
+
+        <div class="route-row">
+          <div class="stop from" id="ticketStart"></div>
+          <div class="arrow"></div>
+          <div class="stop to" id="ticketEnd"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="time-row">
+          <div class="block">
+            <div class="label">Booking Time</div>
+            <div class="value" id="ticketBookingTime"></div>
+          </div>
+          <div class="block">
+            <div class="label">Validity Time</div>
+            <div class="value" id="ticketValidityTime"></div>
+          </div>
+        </div>
+
+        <div class="ticket-id" id="ticketId"></div>
+
+        <div class="divider2"></div>
+
+        <!-- PUT YOUR LOGO'S PATH/URL IN THE src BELOW -->
+        <div class="seal-wrap">
+          <div class="seal">
+            <img src="image.png" alt="Logo">
+          </div>
+        </div>
+
+        <div class="expires">Expires in <span id="countdown">--:--</span></div>
+
+      </div>
+    </div>
+
+    <!-- QR section now sits below the ticket card, not inside it -->
+    <div class="qr-toggle" id="qrToggleBtn">▦ Show QR code</div>
+    <div class="qr-panel hidden" id="qrPanel">
+      <div id="qrcode-box"></div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+  const form = document.getElementById('booking-form');
+  const formSection = document.getElementById('form-section');
+  const ticketSection = document.getElementById('ticket-section');
+  const newBookingBtn = document.getElementById('new-booking-btn');
+  const qrToggleBtn = document.getElementById('qrToggleBtn');
+  const qrPanel = document.getElementById('qrPanel');
+
+  let countdownTimer = null;
+
+  function pad(n) { return n.toString().padStart(2, '0'); }
+
+  function formatDateTime(d) {
+    const day = pad(d.getDate());
+    const month = d.toLocaleString(undefined, { month: 'short' });
+    const year = d.getFullYear().toString().slice(-2);
+    let hours = d.getHours();
+    const minutes = pad(d.getMinutes());
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    if (hours === 0) hours = 12;
+    return `${day} ${month}, ${year} | ${pad(hours)}:${minutes} ${ampm}`;
+  }
+
+  function randomTicketId() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let id = '';
+    for (let i = 0; i < 16; i++) {
+      id += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return id;
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const agencyName = document.getElementById('agencyName').value.trim() || 'City Transit Services';
+    const busNumber = document.getElementById('busNumber').value.trim();
+    const startPoint = document.getElementById('startPoint').value.trim();
+    const endPoint = document.getElementById('endPoint').value.trim();
+    const passengers = parseInt(document.getElementById('passengers').value, 10);
+    const pricePerPerson = parseFloat(document.getElementById('pricePerPerson').value);
+    const validityMinutes = parseInt(document.getElementById('validityMinutes').value, 10);
+
+    const total = passengers * pricePerPerson;
+    const now = new Date();
+    const validityEnd = new Date(now.getTime() + validityMinutes * 60000);
+    const ticketId = randomTicketId();
+
+    document.getElementById('ticketAgency').textContent = agencyName;
+    document.getElementById('ticketRoute').textContent = busNumber;
+    document.getElementById('ticketCount').textContent = passengers;
+    document.getElementById('ticketTotal').textContent = '₹' + total.toFixed(0);
+    document.getElementById('ticketStart').textContent = startPoint;
+    document.getElementById('ticketEnd').textContent = endPoint;
+    document.getElementById('ticketBookingTime').textContent = formatDateTime(now);
+    document.getElementById('ticketValidityTime').textContent = formatDateTime(validityEnd);
+    document.getElementById('ticketId').textContent = ticketId;
+
+    // Build / rebuild QR code encoding the ticket id
+    const qrBox = document.getElementById('qrcode-box');
+    qrBox.innerHTML = '';
+    if (window.QRCode) {
+      new QRCode(qrBox, {
+        text: ticketId,
+        width: 140,
+        height: 140
+      });
+    }
+    qrPanel.classList.add('hidden');
+    qrToggleBtn.textContent = '▦ Show QR code';
+
+    // Countdown timer
+    if (countdownTimer) clearInterval(countdownTimer);
+    function updateCountdown() {
+      const diff = validityEnd.getTime() - Date.now();
+      const countdownEl = document.getElementById('countdown');
+      if (diff <= 0) {
+        countdownEl.textContent = '00:00:00';
+        clearInterval(countdownTimer);
+        return;
+      }
+      const totalSeconds = Math.floor(diff / 1000);
+      const hrs = Math.floor(totalSeconds / 3600);
+      const mins = Math.floor((totalSeconds % 3600) / 60);
+      const secs = totalSeconds % 60;
+      countdownEl.textContent = `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+    }
+    updateCountdown();
+    countdownTimer = setInterval(updateCountdown, 1000);
+
+    formSection.classList.add('hidden');
+    ticketSection.classList.remove('hidden');
+  });
+
+  qrToggleBtn.addEventListener('click', function () {
+    qrPanel.classList.toggle('hidden');
+    qrToggleBtn.textContent = qrPanel.classList.contains('hidden') ? '▦ Show QR code' : '▦ Hide QR code';
+  });
+
+  newBookingBtn.addEventListener('click', function () {
+    if (countdownTimer) clearInterval(countdownTimer);
+    form.reset();
+    ticketSection.classList.add('hidden');
+    formSection.classList.remove('hidden');
+  });
+</script>
+
+</body>
+</html>
